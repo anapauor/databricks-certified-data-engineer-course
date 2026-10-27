@@ -36,7 +36,7 @@ DESCRIBE students
 
 -- COMMAND ----------
 
-SELECT email, ______________ AS student_surname, ______________ AS student_city
+SELECT email, profile:last_name AS student_surname, profile:city AS student_city
 FROM students
 
 -- COMMAND ----------
@@ -49,7 +49,7 @@ FROM students
 -- COMMAND ----------
 
 SELECT enroll_id, courses 
-FROM enrollments
+FROM enrollments limit 3;
 
 -- COMMAND ----------
 
@@ -60,9 +60,20 @@ FROM enrollments
 
 SELECT
   enroll_id,
+  filter(courses, i -> i.subtotal > 40) AS large_totals
+  FROM enrollments
+
+
+-- COMMAND ----------
+
+select * from 
+(SELECT
+  enroll_id,
   courses,
-  ______________ AS large_totals
-FROM enrollments
+  EXPLODE(COURSES) AS courses_j,
+  cast(courses_j.subtotal as int) as large_totals
+FROM enrollments)
+WHERE large_totals > 40
 
 -- COMMAND ----------
 
@@ -86,7 +97,12 @@ FROM enrollments
 
 -- COMMAND ----------
 
---------------------
+CREATE OR REPLACE FUNCTION get_letter_grade(gpa DOUBLE) 
+  RETURN CASE WHEN gpa >= 3.50 THEN 'A' 
+              WHEN  2.75 < gpa AND gpa <= 3.44 THEN 'B'
+              WHEN 2.0 < gpa AND GPA <= 2.74 THEN 'C'
+              WHEN gpa >= 0 AND GPA <= 1.99 THEN 'F'
+            END ;
 
 -- COMMAND ----------
 
@@ -98,5 +114,5 @@ FROM enrollments
 
 -- COMMAND ----------
 
-SELECT student_id, gpa, _______________ as letter_grade
+SELECT student_id, gpa, get_letter_grade(GPA) as letter_grade
 FROM students

@@ -26,7 +26,8 @@
 
 -- COMMAND ----------
 
---------------------
+-- SELECT * FROM parquet.`:dataset.school/enrollments`
+SELECT * FROM parquet.`/Volumes/workspace/DE_Associate_School/dataset/enrollments`;
 
 -- COMMAND ----------
 
@@ -35,7 +36,9 @@
 
 -- COMMAND ----------
 
---------------------
+create table enrollments 
+as 
+SELECT * FROM parquet.`/Volumes/workspace/DE_Associate_School/dataset/enrollments`;
 
 -- COMMAND ----------
 
@@ -57,7 +60,11 @@ SELECT * FROM enrollments
 
 -- COMMAND ----------
 
---------------------
+CREATE TABLE IF NOT EXISTS students
+AS 
+SELECT * FROM json.`/Volumes/workspace/DE_Associate_School/dataset/students-json`;
+
+
 
 -- COMMAND ----------
 
@@ -82,7 +89,20 @@ SELECT * FROM students
 
 -- COMMAND ----------
 
---------------------
+CREATE TABLE IF NOT EXISTS courses
+as
+select * 
+from read_files(
+:dataset_school || '/courses-csv',
+format => 'csv',
+delimiter => ';',
+header => 'true',
+inferSchema => 'true'
+)
+
+-- COMMAND ----------
+
+drop table students_csv;
 
 -- COMMAND ----------
 
@@ -91,7 +111,8 @@ SELECT * FROM students
 
 -- COMMAND ----------
 
---------------------
+select * from courses;
+
 
 -- COMMAND ----------
 

@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "6"
+# ///
 # MAGIC %md
 # MAGIC
 # MAGIC ## Lab: Spark Structured Streaming
@@ -41,6 +45,10 @@ schema_location = f"{checkpoints_school}/enrollments_stats"
   .____________________
   .load(dataset_source)
   .createOrReplaceTempView("enrollments_tmp_vw"))
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
