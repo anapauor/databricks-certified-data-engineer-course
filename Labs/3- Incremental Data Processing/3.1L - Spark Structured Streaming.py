@@ -40,15 +40,12 @@ schema_location = f"{checkpoints_school}/enrollments_stats"
 
 (spark
   .readStream
-  .___________________
-  .___________________
-  .____________________
+  .format("cloudFiles")
+  .option("cloudFiles.format", "json")
+  .option("cloudFiles.schemaLocation", schema_location)
+  # .option("cloudFiles.schemaEvolutionMode", "addNewColumns")
   .load(dataset_source)
   .createOrReplaceTempView("enrollments_tmp_vw"))
-
-# COMMAND ----------
-
-
 
 # COMMAND ----------
 
@@ -62,7 +59,7 @@ schema_location = f"{checkpoints_school}/enrollments_stats"
 # MAGIC %sql
 # MAGIC
 # MAGIC CREATE OR REPLACE TEMPORARY VIEW enrollments_per_student_tmp_vw AS
-# MAGIC SELECT ___________________
+# MAGIC SELECT student_id, count(enroll_id) as enrollments_counts from enrollments_tmp_vw  group by student_id ;
 # MAGIC
 
 # COMMAND ----------
@@ -76,13 +73,12 @@ schema_location = f"{checkpoints_school}/enrollments_stats"
 
 checkpoint_path = f"{checkpoints_school}/enrollments_stats"
 
-query = (spark._________________
-              ._________________
-              ._________________
-              ._________________
-              ._________________
-              ._________________
-              ._________________
+query = (spark.table("enrollments_per_student_tmp_vw")
+              .writeStream
+              .option("checkpointLocation", checkpoint_path)
+              .outputMode("complete")
+              .trigger(availableNow=True)
+              .table("enrollments_stats")
         )
 
 # COMMAND ----------

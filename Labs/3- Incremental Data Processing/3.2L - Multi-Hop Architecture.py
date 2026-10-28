@@ -36,13 +36,13 @@ def process_bronze():
   schema_location = bronze_checkpoint_path
 
   (spark.readStream
-          .___________________
-          .___________________
-          .___________________
+          .format("cloudFiles")
+          .option("cloudFiles.format", "json")
+          .option("cloudFiles.schemaLocation", schema_location)
           .load(dataset_source)
         .writeStream
-          .___________________
-          .___________________
+          .option("checkpointLocation", bronze_checkpoint_path)
+          .outputMode("append")
           .trigger(availableNow=True)
           .table("bronze")
           .awaitTermination()
@@ -60,7 +60,7 @@ process_bronze()
 (spark
   .readStream
   .table("bronze")
-  .___________________("bronze_tmp"))
+  .createOrReplaceTempView("bronze_tmp"))
 
 # COMMAND ----------
 
@@ -75,7 +75,12 @@ process_bronze()
 
 # MAGIC %sql
 # MAGIC CREATE OR REPLACE TEMPORARY VIEW bronze_cleaned_tmp AS
-# MAGIC SELECT ___________________
+# MAGIC SELECT *, 
+# MAGIC      current_timestamp() processing_time
+# MAGIC FROM bronze_tmp
+# MAGIC WHERE quantity > 0
+# MAGIC     
+# MAGIC
 # MAGIC
 
 # COMMAND ----------
@@ -91,9 +96,9 @@ def process_silver():
         silver_checkpoint_path = f"{checkpoints_school}/silver"
 
         (spark.table("bronze_cleaned_tmp")
-                .___________________
-                .___________________
-                .___________________
+                .writeStream
+                .option("checkpointLocation", silver_checkpoint_path)
+                .outputMode("append")
                 .trigger(availableNow=True)
                 .table("silver")
                 .awaitTermination()
@@ -124,7 +129,10 @@ process_silver()
 
 # MAGIC %sql
 # MAGIC CREATE OR REPLACE TEMPORARY VIEW enrollments_per_student_tmp_vw AS
-# MAGIC SELECT ___________________
+# MAGIC SELECT student_ID , COUNT(ENROLL_ID) enrollments_count
+# MAGIC FROM silver_tmp
+# MAGIC GROUP BY student_ID
+# MAGIC
 # MAGIC
 
 # COMMAND ----------
@@ -140,8 +148,8 @@ def process_gold():
 
   query = (spark.table("enrollments_per_student_tmp_vw")
                 .writeStream
-                .___________________
-                .___________________
+                .option("checkpointLocation", gold_checkpoint_path)
+                .outputMode("complete")
                 .trigger(availableNow=True)
                 .table("gold_enrollments_stats")
                 )
@@ -158,7 +166,7 @@ process_gold()
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM gold_enrollments_stats
+# MAGIC SELECT count(*) FROM gold_enrollments_stats
 
 # COMMAND ----------
 
